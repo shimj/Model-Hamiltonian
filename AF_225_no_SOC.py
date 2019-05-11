@@ -66,7 +66,9 @@ if pool: pool.close()
 print("result:\n","\n".join([str(item) for item in result]))
 from functools import reduce
 import operator
-final_without_E = reduce(operator.add, [item[1]*item[2] for item in result if item[2] != sp.eye(item[2].shape[0])])
+final_without_E = reduce(operator.add,
+    [item[1]*item[2] for item in result if item[2] != sp.eye(item[2].shape[0])],
+    sp.zeros(result[0][2].shape[0]))
 print("final without E:\n["+",\n".join([str(row) for row in final_without_E.tolist()])+"]")
 print("(run time: "+str(round(time.time() - start_time, 1))+"s)")
 # try:
