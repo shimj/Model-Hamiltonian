@@ -150,8 +150,8 @@ def solution_space_basis(oper, matrix_M, expr_list, base_expr, pool="", debug=Fa
     debug_print(oper["name"], "got matrix_F, calculating (FxM)*alpha=alpha", do_print=debug)
     matrix_FM = TensorProduct(matrix_F, matrix_M)
     temp = matrix_FM - sp.eye(matrix_FM.shape[0])
-    #curr_basis = np.array(mat.nullspace(simplify=sp.nsimplify)).tolist()
-    #solution_basis = [m.T.tolist()[0] for m in nullspace(mat, simplify=sp.nsimplify, pool=pool)]
+    # curr_basis = np.array(mat.nullspace(simplify=sp.nsimplify)).tolist()
+    # solution_basis = [m.T.tolist()[0] for m in nullspace(mat, simplify=sp.nsimplify, pool=pool)]
     solution_basis = nullspace(temp, pool=pool)
     debug_print(oper["name"], "end", do_print=debug)
     return solution_basis
@@ -177,7 +177,7 @@ def model_detail(operations, order_list, pool="", debug=False):
         tuple[0] (list of Matrix): solution basis (A^{(l)})
         tuple[1] (list of Symbol): expression basis (f_i(k))
         tuple[2] (list of Matrix): the Hermitian basis (B_i)
-        tuple[3] (list of Symbol): a list of coefficients (c_l)
+        # tuple[3] (list of Symbol): a list of coefficients (c_l)
 
     operations (list of dict): a list of dict for all symmetries, the dict have four keys "op3x3", "rep", "is_au" and "name"
     order_list (list of int): a list of order of the polynomial of k
@@ -208,10 +208,10 @@ def model_detail(operations, order_list, pool="", debug=False):
         hermitian_list = narrow_hermitian_basis(PT_M_matrix, hermitian_list, pool=pool)
         debug_print("the number of the current Hermitian basis is", len(hermitian_list), do_print=debug)
         if PT_contained:
-            # delete PT
+            ## delete PT
             operations = [item for item in operations if not (item["is_au"]==True and item["op3x3"]==sp.eye(3))]
         else:
-            # delete TR
+            ## delete TR
             operations = [item for item in operations if not (item["is_au"]==True and item["op3x3"]==-sp.eye(3))]
 
     dim_matrix_M = len(hermitian_list)
@@ -230,11 +230,11 @@ def model_detail(operations, order_list, pool="", debug=False):
         solution_bases = [solution_space_basis(oper, matrix_M_list[i], expr_list, klist,
             pool=pool, debug=debug) for i, oper in enumerate(operations)]
         debug_print("Got alpha bases for all symmetries", do_print=debug)
-        # merging list is much faster than row_join of matrices, so intersection() is designed to handle list of list
+        ## merging list is much faster than row_join of matrices, so intersection() is designed to handle list of list
         solution_bases = [[m.T.tolist()[0] for m in base] for base in solution_bases]
         alpha_base = intersection(*solution_bases, pool=pool, debug=debug)
         debug_print("got intersection of solution spaces", do_print=debug)
-        #alpha_base = intersection_basis(solution_bases)
+        # alpha_base = intersection_basis(solution_bases)
         matrix_A_basis = [sp.Matrix(np.array(item).reshape(dim_matrix_F_list[now], dim_matrix_M)) for item in alpha_base]
         matrix_A_basis_temp = [sp.zeros(sum(dim_matrix_F_list[0:now]), dim_matrix_M).col_join(m) for m in matrix_A_basis]
         matrix_A_basis_expanded = [m.col_join(sp.zeros(sum(dim_matrix_F_list[now+1:]), dim_matrix_M)) for m in matrix_A_basis_temp]
@@ -247,7 +247,7 @@ def model_detail(operations, order_list, pool="", debug=False):
 def simple_calc(operations, order_list, pool="", debug=False):
     """ calculate the Hamiltonian
     
-    return (list of tuple): [(1, h_1(k), B_1), (2, h_2(k), B_2), ...]
+    return (list of tuple): [(h_1(k), B_1), (h_2(k), B_2), ...]
 
     order_list (list of int): a list of order of the polynomial of k
     pool (pool): if pool object passed in, then use it
@@ -255,17 +255,20 @@ def simple_calc(operations, order_list, pool="", debug=False):
     """
     matrix_A_basis, expr_list, hermitian_list = model_detail(operations, order_list=order_list, pool=pool, debug=debug)
     coefficients = [sp.symbols("c"+str(i+1)) for i in range(len(matrix_A_basis))]
-    f_num = len(expr_list)
-    B_num = len(hermitian_list)
-    matrix_A = reduce(operator.add, [c*A for c, A in zip(coefficients, matrix_A_basis)])
-    hk = [reduce(operator.add, [coef*expr for expr, coef in zip(expr_list, col)]) for col in matrix_A.T.tolist()]
-    result = []
-    num=0
-    for item1, item2 in zip(hk, hermitian_list):
-        if item1 != 0:
-            num += 1
-            result.append((num, item1, item2))
-    #result = [(num+1, item1, item2) for num, item1, item2 in zip(range(len(hk)), hk, hermitian_list) if item1 != 0]
+
+    if matrix_A_basis:
+        ## sum on l
+        matrix_A = reduce(operator.add, [c*A for c, A in zip(coefficients, matrix_A_basis)])
+        ## sum on j
+        hk = [reduce(operator.add, [coef*expr for expr, coef in zip(expr_list, col)]) for col in matrix_A.T.tolist()]
+        ## return a list with index i (do not sum on i)
+        result = []        
+        for item1, item2 in zip(hk, hermitian_list):
+            if item1 != 0:
+                result.append((item1, item2))
+    else: ## alpha (or A) has no solution
+        result = []
+    # result = [(num+1, item1, item2) for num, item1, item2 in zip(range(len(hk)), hk, hermitian_list) if item1 != 0]
     return result
 
 def energy(hermitian_list):
