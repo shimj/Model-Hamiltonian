@@ -165,7 +165,7 @@ def narrow_hermitian_basis(PT_M_matrix, hermitian_list, pool=""):
     hermitian_list (list of Matrix): the original Hermitian basis
     pool (pool): if pool object passed in, then use it
     '''
-    solution_basis = nullspace(PT_M_matrix.T-sp.eye(PT_M_matrix.shape[0]), simplify=sp.nsimplify, pool=pool)
+    solution_basis = nullspace(PT_M_matrix-sp.eye(PT_M_matrix.shape[0]), simplify=sp.nsimplify, pool=pool)
     new_hermitian_list = [reduce(operator.add, [coef * hermitian for coef,
         hermitian in zip(solution, hermitian_list)]) for solution in solution_basis]
     return new_hermitian_list
