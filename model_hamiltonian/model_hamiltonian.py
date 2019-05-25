@@ -5,6 +5,7 @@ from ._tool import hermitian_inner_product, get_hermitian_base, get_expr, expr_n
 import random
 from functools import reduce
 import operator
+from sympy import pprint
 
 if sp.__version__[0] != "0":
     def linear_solve(A,b):
@@ -152,11 +153,11 @@ def solution_space_basis(oper, matrix_M, expr_list, base_expr, pool="", debug=Fa
     temp = matrix_FM - sp.eye(matrix_FM.shape[0])
     # curr_basis = np.array(mat.nullspace(simplify=sp.nsimplify)).tolist()
     # solution_basis = [m.T.tolist()[0] for m in nullspace(mat, simplify=sp.nsimplify, pool=pool)]
-    solution_basis = nullspace(temp, pool=pool)
+    solution_basis = nullspace(temp, pool=pool, debug=debug)
     debug_print(oper["name"], "end", do_print=debug)
     return solution_basis
 
-def narrow_hermitian_basis(PT_M_matrix, hermitian_list, pool=""):
+def narrow_hermitian_basis(PT_M_matrix, hermitian_list, pool="", debug=False):
     '''get a new set of Hermitian basis based on PT symmetry
 
     return (list of Matrix): a set of Hermitian basis
@@ -165,7 +166,7 @@ def narrow_hermitian_basis(PT_M_matrix, hermitian_list, pool=""):
     hermitian_list (list of Matrix): the original Hermitian basis
     pool (pool): if pool object passed in, then use it
     '''
-    solution_basis = nullspace(PT_M_matrix-sp.eye(PT_M_matrix.shape[0]), simplify=sp.nsimplify, pool=pool)
+    solution_basis = nullspace(PT_M_matrix-sp.eye(PT_M_matrix.shape[0]), simplify=sp.nsimplify, pool=pool, debug=debug)
     new_hermitian_list = [reduce(operator.add, [coef * hermitian for coef,
         hermitian in zip(solution, hermitian_list)]) for solution in solution_basis]
     return new_hermitian_list
@@ -205,7 +206,7 @@ def model_detail(operations, order_list, pool="", debug=False):
             PT_M_matrix = ""
     if PT_M_matrix:
         debug_print("narrowing the number of Hermitian basis", do_print=debug)
-        hermitian_list = narrow_hermitian_basis(PT_M_matrix, hermitian_list, pool=pool)
+        hermitian_list = narrow_hermitian_basis(PT_M_matrix, hermitian_list, pool=pool, debug=debug)
         debug_print("the number of the current Hermitian basis is", len(hermitian_list), do_print=debug)
         if PT_contained:
             ## delete PT
@@ -273,6 +274,45 @@ def simple_calc(operations, order_list, output_index="i", pool="", debug=False):
             ## sum on i
             result.append(sp.simplify(reduce(operator.add, [item1*item2 for item1, item2 in zip(h_li, hermitian_list)])))
         return result
+
+def show_result(result, result_pattern="l", kz_zero=False, pretty_print=True):
+    if result_pattern=="l":
+        if kz_zero:
+            result = [item.subs(sp.symbols("kz"), 0) for item in result]
+            result = [item for item in result if item!=sp.zeros(item.shape[0])]
+        if not pretty_print:
+            print("\n".join(["C"+str(i+1)+" "+str(item) for i, item in enumerate(result)]))
+        else:
+            for i, item in enumerate(result):
+                print("C"+str(i+1)+":")
+                pprint(item)
+    elif result_pattern=="i":
+        if kz_zero:
+            result = [(item[0].subs(sp.symbols("kz"), 0),item[1]) for item in result]
+            result = [item for item in result if item[0]!=0]
+        if not result:
+            print("Vanishing Halimtonian.")
+            exit()
+        final_without_E = reduce(operator.add,
+            [item[0]*item[1] for item in result if item[1] != sp.eye(item[1].shape[0])],
+            sp.zeros(result[0][1].shape[0]))
+        if not pretty_print:
+            print("result:\n"+"\n".join([str(i+1)+" "+str(item) for i, item in enumerate(result)]))
+            print("final without E:\n["+",\n".join([str(row) for row in final_without_E.tolist()])+"]")
+        else:
+            print("result:")
+            for i, item in enumerate(result):
+                print(str(i+1)+":", item[0])
+                pprint(item[1])
+            # print("final without E:")
+            # pprint(final_without_E)
+            print("final without E:\n["+",\n".join([str(row) for row in final_without_E.tolist()])+"]")
+        
+        try:
+            print("\neigenvalues:", energy([item[1] for item in result]))
+        except:
+            exit()
+
 
 def energy(hermitian_list):
     assert hermitian_list

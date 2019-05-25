@@ -89,15 +89,15 @@ def nullspace(matrix, simplify=sp.simplify, check_with_numpy=True, pool="", debu
     pool (pool): if pool object passed in, then use it
     debug (boolean): if True, print the progress infomation
     """
-    matrix = sp.simplify(matrix) ## this line could sometimes avoid failing to solve rref
+    matrix = sp.simplify(matrix) ## this line could sometimes (not always) avoid failing to solve rref
     if pool and sp.__version__[0] == "0":
         print('Warning: have not yet added the ability of parallel calculation for nullspace() to the current version of sympy')
         pool = ''
     if not pool:
-        debug_print("solving nullspace (if it takes too much time, it probably fails to solve.)", do_print=debug)
+        debug_print("solving nullspace (if it takes too much time, it probably fails to solve. Canceling the similar transformation may help.)", do_print=debug)
         result = matrix.nullspace(simplify=sp.simplify)
     else:
-        debug_print("solving rref (if it takes too much time, it probably fails to solve.)", do_print=debug)
+        debug_print("solving rref (if it takes too much time, it probably fails to solve. Canceling the similar transformation may help.)", do_print=debug)
         reduced, pivots = matrix.rref(simplify=simplify)
         cols = matrix.cols
         free_vars = [i for i in range(matrix.cols) if i not in pivots]
