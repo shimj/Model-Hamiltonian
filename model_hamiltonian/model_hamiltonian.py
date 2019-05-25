@@ -244,32 +244,35 @@ def model_detail(operations, order_list, pool="", debug=False):
 
     return matrix_A_basis_all, expr_list_all, hermitian_list
 
-def simple_calc(operations, order_list, pool="", debug=False):
+def simple_calc(operations, order_list, output_index="i", pool="", debug=False):
     """ calculate the Hamiltonian
     
-    return (list of tuple): [(h_1(k), B_1), (h_2(k), B_2), ...]
+    return (list of tuple): 1. if output_index="i": [(h_1(k), B_1), (h_2(k), B_2), ...]
+                            2. if output_index="l": [H_1, H_2, ...] where the subscript is l
 
     order_list (list of int): a list of order of the polynomial of k
     pool (pool): if pool object passed in, then use it
     debug (boolean): if True, print the progress infomation
     """
     matrix_A_basis, expr_list, hermitian_list = model_detail(operations, order_list=order_list, pool=pool, debug=debug)
-    coefficients = [sp.symbols("c"+str(i+1)) for i in range(len(matrix_A_basis))]
-
-    if matrix_A_basis:
+    if not matrix_A_basis: return [] ## alpha (or A) has no solution
+    if output_index=="i":
+        coefficients = [sp.symbols("c"+str(i+1)) for i in range(len(matrix_A_basis))]
         ## sum on l
         matrix_A = reduce(operator.add, [c*A for c, A in zip(coefficients, matrix_A_basis)])
         ## sum on j
         hk = [reduce(operator.add, [coef*expr for expr, coef in zip(expr_list, col)]) for col in matrix_A.T.tolist()]
-        ## return a list with index i (do not sum on i)
-        result = []        
-        for item1, item2 in zip(hk, hermitian_list):
-            if item1 != 0:
-                result.append((item1, item2))
-    else: ## alpha (or A) has no solution
+        ## return a list with index i and eliminate those with vanishing coefficient (beacuse of vanshing col of A)
+        result = [(item1, item2) for item1, item2 in zip(hk, hermitian_list) if  item1!=0]
+        return result
+    elif output_index=="l":
         result = []
-    # result = [(num+1, item1, item2) for num, item1, item2 in zip(range(len(hk)), hk, hermitian_list) if item1 != 0]
-    return result
+        for A_l in matrix_A_basis:
+            ## sum on j (coef doesn't contain c_l)
+            h_li = [sp.simplify(reduce(operator.add, [coef*expr for expr, coef in zip(expr_list, col)])) for col in A_l.T.tolist()]
+            ## sum on i
+            result.append(sp.simplify(reduce(operator.add, [item1*item2 for item1, item2 in zip(h_li, hermitian_list)])))
+        return result
 
 def energy(hermitian_list):
     assert hermitian_list
