@@ -172,9 +172,9 @@ def match_info(Info, multi_orbs_with_arr=[], chars_for_bands=[], similar_trans=F
     if similar_trans:
         if similar_trans.shape != rep[0].shape: raise Exception(
             "Wrong dimension of the similar-transform matrix")
-        rep = [*[similar_trans.inv()*item*similar_trans for item in rep[0:-1]],
-            similar_trans.inv()*rep[-1]*similar_trans.conjugate()] if TR else [
-            similar_trans.inv()*item*similar_trans for item in rep]
+        rep = [*[sp.simplify(sp.expand(similar_trans.inv()*item*similar_trans)) for item in rep[0:-1]],
+            sp.simplify(sp.expand(similar_trans.inv()*rep[-1]*similar_trans.conjugate()))] if TR else [
+            sp.simplify(sp.expand(similar_trans.inv()*item*similar_trans)) for item in rep]
 
     opers_name = [*Info["genes"], "TR"] if TR else Info["genes"]
     opers_3x3 = [*[sp.Matrix(item) for item in Info["3x3"]],
