@@ -232,7 +232,7 @@ def model_detail(operations, order_list, pool="", debug=False):
         debug_print("Got alpha bases for all symmetries", do_print=debug)
         ## merging list is much faster than row_join of matrices, so intersection() is designed to handle list of list
         solution_bases = [[m.T.tolist()[0] for m in base] for base in solution_bases]
-        alpha_base = intersection(*solution_bases, pool=pool, debug=debug)
+        alpha_base = intersection(solution_bases, pool=pool, debug=debug)
         debug_print("got intersection of solution spaces", do_print=debug)
         # alpha_base = intersection_basis(solution_bases)
         matrix_A_basis = [sp.Matrix(np.array(item).reshape(dim_matrix_F_list[now], dim_matrix_M)) for item in alpha_base]
