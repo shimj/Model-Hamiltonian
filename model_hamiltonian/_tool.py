@@ -71,13 +71,16 @@ def debug_print(*a, do_print=True):
     if do_print:
         print(*a)
 
-def numpy_nullity(matrix, atol=1e-13, rtol=0):
+def confirm_nullity(matrix, nullity, atol=1e-13, rtol=0):
     ## https://scipy-cookbook.readthedocs.io/items/RankNullspace.html
     matrix = np.array(matrix.evalf().tolist(), dtype=complex)
     s = np.linalg.svd(matrix, compute_uv=False)
     tol = max(atol, rtol * s[0])
     rank = int((s >= tol).sum())
-    return matrix.shape[1]-rank
+    if matrix.shape[1]-rank==nullity:
+        return True
+    else:
+        return False
 
 def nullspace(matrix, simplify=sp.simplify, check_with_numpy=True, pool="", debug=False):
     """ solve b in Ab=0 (modified from the sympy nullspace)
@@ -106,7 +109,7 @@ def nullspace(matrix, simplify=sp.simplify, check_with_numpy=True, pool="", debu
             free_var, reduced, pivots, cols] for free_var in free_vars])
         #result = [nullspace_inner(matrix, free_var, reduced, pivots, cols) for free_var in free_vars]
     debug_print("Check nullspace with numpy", do_print=debug)
-    if check_with_numpy and len(result)!=numpy_nullity(matrix): raise Exception("Sympy gives wrong nullspace.")
+    if check_with_numpy and not confirm_nullity(matrix, len(result)): raise Exception("Sympy gives wrong nullspace.")
     debug_print("Checked", do_print=debug)
     return result
 
@@ -128,7 +131,7 @@ def intersection(bases, pool="", debug=False):
         matrix_base1 = sp.Matrix(bases[1]).T
         large_matrix = matrix_base0.row_join(-matrix_base1)
         ns = nullspace(large_matrix, check_with_numpy=False, pool=pool, debug=debug)
-        if numpy_nullity(large_matrix)==len(ns): ## smypy gives wrong nullspace
+        if confirm_nullity(large_matrix, len(ns)): ## smypy gives wrong nullspace
             intersection_base = [(matrix_base0*item[0:len(bases[0]),0]).T.tolist()[0] for item in ns]
         else: ## use another method: https://math.stackexchange.com/questions/767882/linear-algebra-vector-space-how-to-find-intersection-of-two-subspaces#answer-2179047
             debug_print("Smypy gives wrong nullspace, try another method (also using nullspace).", do_print=debug)
