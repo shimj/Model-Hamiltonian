@@ -124,7 +124,7 @@ def intersection(bases, pool="", debug=False):
     debug (boolean): if True, print the progress infomation
     """
     if len(bases) == 0: return []
-    if len(bases) == 1: return bases
+    if len(bases) == 1: return bases[0]
     if len(bases) == 2:
         if len(bases[0]) == 0 or len(bases[1]) == 0: return []
         matrix_base0 = sp.Matrix(bases[0]).T
