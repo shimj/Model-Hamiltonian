@@ -15,7 +15,8 @@ if sp.__version__[0] != "0":
         A (list of list of number): A matrix
         b (list of number): b vector
         '''
-        return list(sp.linsolve((sp.Matrix(A), sp.Matrix(b)), sp.symbols("x")))[0]
+        vnames = sp.symbols(["a"+str(i) for i in range(len(b))])
+        return list(sp.linsolve((sp.Matrix(A), sp.Matrix(b)), vnames))[0]
 else:
     def linear_solve(A,b):
         '''solve linear equation Ax=b
