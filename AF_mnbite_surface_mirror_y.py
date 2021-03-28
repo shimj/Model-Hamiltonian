@@ -6,7 +6,7 @@ import multiprocessing
 import sympy as sp
 import time
 
-try_parallel = True
+try_parallel = False
 gname = "C3v"
 Info = get_data(TR=True)[gname]
 print(Info["genes"])
@@ -48,19 +48,17 @@ print()
 print(operations)
 
 result = simple_calc(operations, order_list=order_list, pool=pool, debug=False)
-result = [(item[0],item[1].subs(sp.symbols("kz"), 0),item[2]) for item in result]
-result = [item for item in result if item[1]!=0]
+result = [(item[0].subs(sp.symbols("kz"), 0),item[1]) for item in result]
+result = [item for item in result if item[0]!=0]
 if pool: pool.close()
 
 print("result:\n","\n".join([str(item) for item in result]))
 from functools import reduce
 import operator
-final_without_E = reduce(operator.add,
-    [item[1]*item[2] for item in result if item[2] != sp.eye(item[2].shape[0])],
-    sp.zeros(result[0][2].shape[0]))
+final_without_E = reduce(operator.add, [item[0]*item[1] for item in result if item[1] != sp.eye(item[1].shape[0])])
 print("final without E:\n["+",\n".join([str(row) for row in final_without_E.tolist()])+"]")
 print("(run time: "+str(round(time.time() - start_time, 1))+"s)")
 try:
-    print("\neigenvalues:", energy([item[2] for item in result]))
+    print("\neigenvalues:", energy([item[1] for item in result]))
 except:
     exit()

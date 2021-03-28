@@ -10,7 +10,7 @@ result_pattern = "i" #"i"
 kz_zero = False ## True for xy surface
 pretty_print = True
 
-try_parallel = True
+try_parallel = False
 gname = "D3d"
 Info = get_data(TR=True)[gname]
 print(Info["genes"])
@@ -19,7 +19,7 @@ multi_orbs_with_arr = []
 multi_orbs_with_arr.append([['p, 3/2, 1/2', 'p, 3/2, -1/2'], [1,-1,-1]])
 multi_orbs_with_arr.append([['p, 3/2, 1/2', 'p, 3/2, -1/2'], [1,1,1]])
 
-order_list = [0, 1, 2, 3]
+order_list = [0, 1, 2]
 similar_trans = sp.Matrix([[1,0,0,0],[0,0,1,0],[0,1,0,0],[0,0,0,1]]
     )*sp.diag(1, sp.simplify("I"), 1, -sp.simplify("I"))
 

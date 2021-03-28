@@ -10,7 +10,7 @@ result_pattern = "i" #"i"
 kz_zero = False ## True for xy surface
 pretty_print = True
 
-try_parallel = True
+try_parallel = False
 gname = "D3d"
 Info = get_data(TR=True)[gname]
 print(Info["genes"])
